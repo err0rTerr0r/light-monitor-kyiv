@@ -152,21 +152,33 @@ def parse_github_day(day_data: dict) -> list[bool]:
 
 
 def extract_github(data: dict, cfg: dict) -> dict:
-    res = {}
+    groups = cfg['settings']['groups']
+    res = {grp: {} for grp in groups}
     if not data:
         return res
-    fact = data.get("fact", {}).get("data", {})
-    
-    for grp in cfg['settings']['groups']:
-        res[grp] = {}
-        for ts in sorted(fact.keys(), key=int)[:2]:
-            d = fact.get(ts, {}).get(grp)
-            if not d:
+
+    fact = data.get("fact")
+    fact_data = fact.get("data") if isinstance(fact, dict) else None
+
+    # Upstream sometimes returns [] instead of {} when no schedule is published
+    if not isinstance(fact_data, dict):
+        if fact_data:  # non-empty, unknown format: log it instead of crashing
+            print(f"GitHub: unexpected fact.data type "
+                  f"{type(fact_data).__name__}: {str(fact_data)[:300]}")
+        else:
+            print("GitHub: fact.data is empty, no actual schedule yet")
+        return res
+
+    timestamps = sorted((ts for ts in fact_data if str(ts).isdigit()), key=int)[:2]
+    for grp in groups:
+        for ts in timestamps:
+            d = (fact_data.get(ts) or {}).get(grp)
+            if not isinstance(d, dict):
                 continue
-            
+
             dt = datetime.fromtimestamp(int(ts), tz=KYIV_TZ)
             d_str = dt.strftime("%Y-%m-%d")
-            
+
             if all(d.get(str(h), "yes") == "yes" for h in range(1, 25)):
                 res[grp][d_str] = {"slots": None, "date": dt, "status": "pending"}
             else:
