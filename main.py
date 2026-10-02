@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 # === Configuration ===
@@ -11,7 +12,7 @@ CONFIG_FILE = "config.json"
 CACHE_FILE = "last_schedules.json"
 MESSAGES_FILE = "message_ids.json"
 
-KYIV_TZ = timezone(timedelta(hours=2))
+KYIV_TZ = ZoneInfo("Europe/Kyiv")
 
 GITHUB_URL = "https://raw.githubusercontent.com/Baskerville42/outage-data-ua/main/data/{region}.json"
 YASNO_URL = "https://app.yasno.ua/api/blackout-service/public/shutdowns/regions/{region_id}/dsos/{dso_id}/planned-outages"
@@ -482,11 +483,10 @@ def format_msg(gh: dict, ya: dict, cfg: dict) -> Optional[str]:
             dt = (g_d or y_d)["date"]
             src_msgs = []
             
-            match = False
-            if g_d and y_d:
-                if g_d['status'] == 'normal' and y_d['status'] == 'normal':
-                    if g_d['slots'] == y_d['slots']:
-                        match = True
+            # Merge when both sources agree: same status, and same slots for 'normal'
+            match = bool(g_d and y_d) and g_d['status'] == y_d['status'] and (
+                g_d['status'] != 'normal' or g_d['slots'] == y_d['slots']
+            )
             
             if match:
                 gh_name = cfg['sources']['github']['name']
