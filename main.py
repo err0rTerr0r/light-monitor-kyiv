@@ -160,13 +160,23 @@ def extract_github(data: dict, cfg: dict) -> dict:
     fact = data.get("fact")
     fact_data = fact.get("data") if isinstance(fact, dict) else None
 
-    # Upstream sometimes returns [] instead of {} when no schedule is published
-    if not isinstance(fact_data, dict):
-        if fact_data:  # non-empty, unknown format: log it instead of crashing
+    # Upstream returns [] instead of {} when no actual schedule is published
+    if not isinstance(fact_data, dict) or not fact_data:
+        if fact_data and not isinstance(fact_data, list):
             print(f"GitHub: unexpected fact.data type "
                   f"{type(fact_data).__name__}: {str(fact_data)[:300]}")
-        else:
-            print("GitHub: fact.data is empty, no actual schedule yet")
+            return res
+        today_ts = fact.get("today") if isinstance(fact, dict) else None
+        if not today_ts:
+            print("GitHub: no fact schedule and no 'today' timestamp")
+            return res
+        print("GitHub: fact schedule not published yet -> pending")
+        today = datetime.fromtimestamp(int(today_ts), tz=KYIV_TZ)
+        for grp in groups:
+            for dt in (today, today + timedelta(days=1)):
+                res[grp][dt.strftime("%Y-%m-%d")] = {
+                    "slots": None, "date": dt, "status": "pending"
+                }
         return res
 
     timestamps = sorted((ts for ts in fact_data if str(ts).isdigit()), key=int)[:2]
