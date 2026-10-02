@@ -1,6 +1,15 @@
 {
   "github": {
-    "GPV18.1": {}
+    "GPV18.1": {
+      "2026-10-01": {
+        "status": "pending",
+        "slots": null
+      },
+      "2026-10-02": {
+        "status": "pending",
+        "slots": null
+      }
+    }
   },
   "yasno": {
     "GPV18.1": {
