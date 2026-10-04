@@ -44,9 +44,9 @@
       "hours_short": "год."
     },
     "format": {
-      "header_template": "========== ❖ {group} ❖ ==========",
+      "header_template": "========= ❖ {group} ❖ =========",
       "separator_source": "✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧",
-      "separator_day": "■  ■  ■  ■  ■  ■  ■  ■  ■  ■  ■  ■  ■",
+      "separator_day": "■  ■  ■  ■  ■  ■  ■  ■  ■  ■  ■  ■",
       "separator_footer": "────────────────────",
       "table_separator": "-",
       "detail_indent": "   "
