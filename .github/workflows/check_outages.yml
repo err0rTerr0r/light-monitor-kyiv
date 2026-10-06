@@ -1,30 +1,31 @@
 name: Check Outages and Post to Telegram
 
+on:
+  schedule:
+    - cron: '17 * * * *'   # резерв, GitHub может пропускать запуски
+  workflow_dispatch:
+
 concurrency:
   group: check-outages
   cancel-in-progress: false
 
-on:
-  schedule:
-    - cron: '17 * * * *'   # every hour at :17, away from the :00 peak
-  workflow_dispatch:
-
 jobs:
   check-and-post:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+        with:
+          ref: main   # свежий кэш, а не коммит на момент события
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -32,17 +33,18 @@ jobs:
 
       - name: Show trigger
         run: echo "Triggered by ${{ github.event_name }} at $(TZ=Europe/Kyiv date '+%d.%m.%Y %H:%M')"
-      
+
       - name: Run script
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         run: python main.py
-      
+
       - name: Commit cache files
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add last_schedules.json message_ids.json || true
+          git add last_schedules.json message_ids.json
           git diff --staged --quiet || git commit -m "Update cache"
-          git push || true
+          git pull --rebase origin main
+          git push   # без || true, чтобы сбой был виден в логах
