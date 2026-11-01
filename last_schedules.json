@@ -56,16 +56,5 @@
       }
     }
   },
-  "yasno": {
-    "GPV12.1": {
-      "2026-11-01": {
-        "status": "emergency",
-        "slots": null
-      },
-      "2026-11-02": {
-        "status": "emergency",
-        "slots": null
-      }
-    }
-  }
+  "yasno": {}
 }
